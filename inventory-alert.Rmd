@@ -1,0 +1,14 @@
+---
+title: "Action Required: Low Inventory Alert!"
+output: blastula::blastula_email
+---
+
+<img src="low-inventory-banner.png">
+
+A low inventory alert has been triggered - Review the current inventory levels below to determine which filament colors need to be replenished today.
+
+### Current inventory by unit color:
+
+- **Purple:** `r inventory_levels$p_inventory`
+- **Black:** `r inventory_levels$b_inventory` 
+- **Red:** `r inventory_levels$r_inventory` 

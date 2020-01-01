@@ -1,0 +1,12 @@
+name: tracker-report
+title: tracker-report
+username: kelly
+account: kelly
+server: colorado.rstudio.com
+hostUrl: https://colorado.rstudio.com/rsc/__api__
+appId: 4045
+bundleId: 32872
+url: https://colorado.rstudio.com/rsc/content/4045/
+when: 1577829466.22038
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,113 @@
+---
+title: "Cookie Cutter Shop Report"
+resource_files:
+- cookie-shop-banner.png
+- low-inventory-banner.png
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(blastula)
+```
+
+## Orders, Sales, and Inventory Level
+
+This is an example report based loosely on a real Etsy shop I once experimented with running. All data is simulated. 
+
+Import data from CSV:
+
+```{r import_data, message=FALSE, warning=FALSE}
+library(readr)
+
+cookie_shop_orders <- read_csv("cookie-shop-inventory.csv", 
+    col_types = cols(date = col_date(format = "%m/%d/%y")))
+```
+
+Summarize the orders data for each filament type: 
+
+```{r sales_tracker, message=FALSE, warning=FALSE}
+library(dplyr)
+
+orders <- cookie_shop_orders %>%
+  select(purple, black, red, total_orders) %>%
+  summarise_all(sum)
+```
+
+#### Running count of total shop orders placed: `r orders$total_orders`
+
+### Count of units ordered by color:
+
+- **Purple:** `r orders$purple`
+- **Black:** `r orders$black`
+- **Red:** `r orders$red`
+
+#### Total units sold: `r orders$purple + orders$black + orders$red`
+
+---
+
+## Inventory Burndown Charts
+
+### Filament color orders and inventory level:
+
+```{r orders_inventory, echo=FALSE, , message=FALSE, warning=FALSE}
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+
+p <- cookie_shop_orders %>%
+  ggplot() + geom_bar(aes(x = date, y = purple), stat = "identity", color="purple", fill="white") +
+  geom_line(aes(x = date, y = p_inventory)) + theme_clean()
+
+b <- cookie_shop_orders %>%
+  ggplot() + geom_bar(aes(x = date, y = black), stat = "identity", color="black", fill="white") +
+  geom_line(aes(x = date, y = b_inventory)) + theme_clean()
+
+r <- cookie_shop_orders %>%
+  ggplot() + geom_bar(aes(x = date, y = red), stat = "identity", color="red", fill="white") +
+  geom_line(aes(x = date, y = r_inventory)) + theme_clean()
+
+grid.arrange(p,b,r)
+```
+
+### Current inventory by unit color:
+
+```{r current_inventory, echo=FALSE, message=FALSE, warning=FALSE}
+library(lubridate)
+
+low_inventory <- FALSE
+
+inventory_levels <- cookie_shop_orders %>% 
+  filter(date == today()) %>%
+  mutate(p_alert = p_inventory <= 2) %>%
+  mutate(b_alert = b_inventory <= 2) %>%
+  mutate(r_alert = r_inventory <= 2)
+
+if (inventory_levels$p_alert == TRUE || inventory_levels$b_alert == TRUE || inventory_levels$r_alert == TRUE) {
+  low_inventory <- TRUE
+}
+```
+
+- **Purple:** `r inventory_levels$p_inventory` | **Alert:** `r inventory_levels$p_alert`
+- **Black:** `r inventory_levels$b_inventory` | **Alert:** `r inventory_levels$b_alert`
+- **Red:** `r inventory_levels$r_inventory` | **Alert:** `r inventory_levels$r_alert`
+
+## Inventory Control
+
+If my shop dips into the "low inventory zone" for any color of cookie cutter, send an email. 
+
+```{r connect_email, echo=FALSE}
+if (low_inventory == TRUE) {
+  render_connect_email(input = "inventory-alert.Rmd") %>%
+    attach_connect_email(
+      subject = "Cookie Shop: Low inventory alert!"
+    )
+} else {
+  render_connect_email(input = "inventory-update.Rmd") %>%
+    attach_connect_email(
+      subject = "Cookie Shop: Orders and Inventory Update"
+    )
+}
+```
+
